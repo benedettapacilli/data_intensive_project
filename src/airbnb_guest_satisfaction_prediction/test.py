@@ -7,10 +7,13 @@ import pandas as pd
 import os.path
 import kaggle
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, PolynomialFeatures
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder, StandardScaler, MinMaxScaler, PolynomialFeatures
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
 from sklearn.kernel_ridge import KernelRidge
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 
 
@@ -73,9 +76,13 @@ for column in dataset.columns.drop("Guest Satisfaction"):
 dataset = dataset.drop(columns=["Bedrooms", "Business", "City", "Day", "Multiple Rooms", "Person Capacity",
                        "Private Room", "Room Type", "Shared Room", "Normalised Attraction Index", "Normalised Restraunt Index"])
 
-# Remaining columns
+# Remaining columns ['Price' 'Superhost' 'Cleanliness Rating' 'Guest Satisfaction' 'City Center (km)' 'Metro Distance (km' 'Attraction Index' 'Restraunt Index']
 print("Remaining columns")
 print(dataset.columns.values)
+
+numerical_columns = ['Price', 'Cleanliness Rating',
+                     'City Center (km)', 'Metro Distance (km)', 'Attraction Index', 'Restraunt Index']
+binary_columns = ['Superhost']
 
 # Separating training and test data with a 80:20 ratio in two different datasets
 train_set, test_set = train_test_split(dataset, test_size=0.2, random_state=42)
@@ -85,49 +92,49 @@ y_train = train_set["Guest Satisfaction"]
 x_test = test_set.drop(columns=["Guest Satisfaction"])
 y_test = test_set["Guest Satisfaction"]
 
-# Testing Linear Regression
-print("Linear Regression")
-model_poli_std_lin = Pipeline([
-    ('poly', PolynomialFeatures(degree=3, include_bias=False)),
-    ('scaler', StandardScaler()),
-    ('linear', LinearRegression())
-], verbose=True)
+# # Testing Linear Regression
+# print("Linear Regression")
+# model_poli_std_lin = Pipeline([
+#     ('poly', PolynomialFeatures(degree=3, include_bias=False)),
+#     ('scaler', StandardScaler()),
+#     ('linear', LinearRegression())
+# ], verbose=True)
 
-model_poli_std_lin.fit(x_train, y_train)
+# model_poli_std_lin.fit(x_train, y_train)
 
-print_eval(x_train, y_train, model_poli_std_lin)
+# print_eval(x_train, y_train, model_poli_std_lin)
 
-print_eval(x_test, y_test, model_poli_std_lin)
+# print_eval(x_test, y_test, model_poli_std_lin)
 
-# Testing Ridge Regression
-print("Ridge Regression")
-model_poli_std_rdg = Pipeline([
-    ('poly', PolynomialFeatures(degree=3, include_bias=False)),
-    ('scaler', StandardScaler()),
-    ('ridge', Ridge(alpha=1))
-], verbose=True)
+# # Testing Ridge Regression
+# print("Ridge Regression")
+# model_poli_std_rdg = Pipeline([
+#     ('poly', PolynomialFeatures(degree=3, include_bias=False)),
+#     ('scaler', StandardScaler()),
+#     ('ridge', Ridge(alpha=1))
+# ], verbose=True)
 
-model_poli_std_rdg.fit(x_train, y_train)
+# model_poli_std_rdg.fit(x_train, y_train)
 
-print_eval(x_train, y_train, model_poli_std_rdg)
+# print_eval(x_train, y_train, model_poli_std_rdg)
 
-print_eval(x_test, y_test, model_poli_std_rdg)
+# print_eval(x_test, y_test, model_poli_std_rdg)
 
-# Testing Elastic Net Regression
-print("Elastic Net Regression")
-model_poli_std_en = Pipeline([
-    ('poly', PolynomialFeatures(degree=10, include_bias=False)),
-    ('scaler', StandardScaler()),
-    ('elasticnet', ElasticNet(alpha=0.1, l1_ratio=0.8))
-], verbose=True)
+# # Testing Elastic Net Regression
+# print("Elastic Net Regression")
+# model_poli_std_en = Pipeline([
+#     ('poly', PolynomialFeatures(degree=10, include_bias=False)),
+#     ('scaler', StandardScaler()),
+#     ('elasticnet', ElasticNet(alpha=0.1, l1_ratio=0.8))
+# ], verbose=True)
 
-model_poli_std_en.fit(x_train, y_train)
+# model_poli_std_en.fit(x_train, y_train)
 
-print_eval(x_train, y_train, model_poli_std_en)
+# print_eval(x_train, y_train, model_poli_std_en)
 
-print_eval(x_test, y_test, model_poli_std_en)
+# print_eval(x_test, y_test, model_poli_std_en)
 
-# Testing KernelRidge Regression
+# # Testing KernelRidge Regression
 # print("KernelRidge Regression")
 # model_poli_std_krr = Pipeline([
 #     ('scaler', StandardScaler()),
@@ -139,3 +146,39 @@ print_eval(x_test, y_test, model_poli_std_en)
 # print_eval(x_train, y_train, model_poli_std_krr)
 
 # print_eval(x_test, y_test, model_poli_std_krr)
+
+# # Testing Regression trees
+# print("Regression trees")
+
+# model_poli_std_dtr = Pipeline([
+#     ('preproc', ColumnTransformer(transformers=[
+#         ('onehot', OneHotEncoder(sparse_output=False), binary_columns),
+#         ('poly', PolynomialFeatures(degree=2, include_bias=False), numerical_columns),
+#         ('scaler', StandardScaler(), numerical_columns),
+#     ], remainder='passthrough', verbose=True)),
+#     ('dtr', DecisionTreeRegressor(random_state=42))
+# ], verbose=True)
+
+# model_poli_std_dtr.fit(x_train, y_train)
+
+# print_eval(x_train, y_train, model_poli_std_dtr)
+
+# print_eval(x_test, y_test, model_poli_std_dtr)
+
+# Testing Random Forest Regressor best model
+print("Random Forest Regressor")
+
+model_poli_std_rfr = Pipeline([
+    ('preproc', ColumnTransformer(transformers=[
+        ('onehot', OneHotEncoder(sparse_output=False), binary_columns),
+        ('poly', PolynomialFeatures(degree=2, include_bias=False), numerical_columns),
+        ('scaler', StandardScaler(), numerical_columns),
+    ], remainder='passthrough', verbose=True)),
+    ('rfr', RandomForestRegressor(n_estimators=200, max_features="log2", n_jobs=-1))
+], verbose=True)
+
+model_poli_std_rfr.fit(x_train, y_train)
+
+print_eval(x_train, y_train, model_poli_std_rfr)
+
+print_eval(x_test, y_test, model_poli_std_rfr)
