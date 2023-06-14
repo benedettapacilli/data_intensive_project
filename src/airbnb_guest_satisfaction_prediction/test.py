@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import os.path
 import kaggle
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler, MinMaxScaler, PolynomialFeatures
 from sklearn.pipeline import Pipeline
@@ -14,6 +14,7 @@ from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
+from xgboost import XGBRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 
 
@@ -165,16 +166,67 @@ y_test = test_set["Guest Satisfaction"]
 
 # print_eval(x_test, y_test, model_poli_std_dtr)
 
+# # Testing XGBoost Regressor
+# print("XGBoost Regressor")
+
+# model_poli_std_xgb = Pipeline([
+#     ('preproc', ColumnTransformer(transformers=[
+#         # ('onehot', OneHotEncoder(sparse_output=False), binary_columns),
+#         # ('poly', PolynomialFeatures(degree=2, include_bias=False), numerical_columns),
+#         ('scaler', StandardScaler(), numerical_columns),
+#     ], remainder='passthrough', verbose=True)),
+#     ('xgb', XGBRegressor(objective='reg:squarederror', reg_alpha=0.0,
+#      reg_lambda=1.0, n_estimators=200, verbose_eval=True))
+# ], verbose=True)
+
+# model_poli_std_xgb.fit(x_train, y_train)
+
+# print_eval(x_train, y_train, model_poli_std_xgb)
+
+# print_eval(x_test, y_test, model_poli_std_xgb)
+
+# # Testing Random Forest Regressor best model
+# print("Random Forest Regressor")
+
+# model_poli_std_rfr = Pipeline([
+#     ('preproc', ColumnTransformer(transformers=[
+#         ('scaler', StandardScaler(), numerical_columns),
+#     ], remainder='passthrough', verbose=True)),
+#     ('rfr', RandomForestRegressor(n_estimators=200, max_features="log2", n_jobs=-1))
+# ], verbose=True)
+
+# model_poli_std_rfr.fit(x_train, y_train)
+
+# print_eval(x_train, y_train, model_poli_std_rfr)
+
+# print_eval(x_test, y_test, model_poli_std_rfr)
+
+# # Grid Search for Random Forest Regressor
+# print("Grid Search for Random Forest Regressor")
+# grid_params = {
+#     'rfr__max_features': [None, 'sqrt', 'log2'],
+#     'rfr__min_samples_split': [2, 5, 10],
+#     'rfr__min_samples_leaf': [1, 2, 4],
+#     'rfr__bootstrap': [True, False]
+# }
+
+# grid_search = GridSearchCV(
+#     model_poli_std_rfr, grid_params, cv=5, n_jobs=-1)
+# grid_search.fit(x_train, y_train)
+
+# print(grid_search.best_params_)
+# print(grid_search.best_score_)
+# print(grid_search.best_estimator_)
+
 # Testing Random Forest Regressor best model
 print("Random Forest Regressor")
 
 model_poli_std_rfr = Pipeline([
     ('preproc', ColumnTransformer(transformers=[
-        ('onehot', OneHotEncoder(sparse_output=False), binary_columns),
-        ('poly', PolynomialFeatures(degree=2, include_bias=False), numerical_columns),
         ('scaler', StandardScaler(), numerical_columns),
     ], remainder='passthrough', verbose=True)),
-    ('rfr', RandomForestRegressor(n_estimators=200, max_features="log2", n_jobs=-1))
+    ('rfr', RandomForestRegressor(n_estimators=200,
+     max_features="sqrt", bootstrap=False, n_jobs=-1))
 ], verbose=True)
 
 model_poli_std_rfr.fit(x_train, y_train)
