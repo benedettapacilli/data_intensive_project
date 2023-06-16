@@ -234,3 +234,11 @@ model_poli_std_rfr.fit(x_train, y_train)
 print_eval(x_train, y_train, model_poli_std_rfr)
 
 print_eval(x_test, y_test, model_poli_std_rfr)
+
+pd.DataFrame(model_poli_std_rfr.named_steps['rfr'].feature_importances_, index=x_train.columns).plot.bar(
+    figsize=(20, 10), title="Feature Importance").get_figure().savefig("feature_importance.png")
+
+# predict with these test data [70, 0, 8, 7, 2, 500, 500]
+test = pd.DataFrame([[3000, 0, 3, 20, 2, 0, 0]], columns=['Price', 'Superhost', 'Cleanliness Rating',
+                    'City Center (km)', 'Metro Distance (km)', 'Attraction Index', 'Restraunt Index'])
+print(model_poli_std_rfr.predict(test))
