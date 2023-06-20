@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import os.path
 import kaggle
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import mean_squared_error, r2_score, confusion_matrix, precision_score, recall_score, f1_score
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
@@ -128,8 +128,29 @@ y_test = test_set['diabetes']
 
 # print(grid_search.best_params_)
 
-# Testing Random Forest Classifier with Grid Search
-print("Random Forest Classifier")
+# # Testing Random Forest Classifier with Grid Search
+# print("Random Forest Classifier")
+
+# model_rfc = Pipeline([
+#     ('preproc', ColumnTransformer(transformers=[
+#         ('scaler', StandardScaler(), numerical_columns),
+#         ('onehot', OneHotEncoder(), categorical_columns),
+#         ('passthrough', 'passthrough', binary_columns)
+#     ], verbose=True)),
+#     ('model', RandomForestClassifier(n_jobs=-1, bootstrap=True, criterion='gini', max_features='sqrt', n_estimators=300))
+# ])
+
+# grid = {
+#     'model__max_depth': [80, 90, 100, 110],
+#     'model__min_samples_leaf': [1, 2, 4],
+#     'model__min_samples_split': [2, 5, 10]
+# }
+
+# grid_search = GridSearchCV(model_rfc, grid, cv=5, verbose=3, n_jobs=-1)
+
+# grid_search.fit(x_train, y_train)
+
+# print(grid_search.best_params_)
 
 model_rfc = Pipeline([
     ('preproc', ColumnTransformer(transformers=[
@@ -137,17 +158,33 @@ model_rfc = Pipeline([
         ('onehot', OneHotEncoder(), categorical_columns),
         ('passthrough', 'passthrough', binary_columns)
     ], verbose=True)),
-    ('model', RandomForestClassifier(n_jobs=-1, bootstrap=True, criterion='gini', max_features='sqrt', n_estimators=300))
+    ('model', RandomForestClassifier(n_jobs=-1, bootstrap=True, criterion='gini',
+     max_features='sqrt', n_estimators=300, max_depth=90, min_samples_leaf=2, min_samples_split=10))
 ])
 
-grid = {
-    'model__max_depth': [80, 90, 100, 110],
-    'model__min_samples_leaf': [1, 2, 4],
-    'model__min_samples_split': [2, 5, 10]
-}
+model_rfc.fit(x_train, y_train)
 
-grid_search = GridSearchCV(model_rfc, grid, cv=5, verbose=3, n_jobs=-1)
+print("R^2 score on test set:")
+print(model_rfc.score(x_test, y_test))
 
-grid_search.fit(x_train, y_train)
+predicted = model_rfc.predict(x_test)
+cm = confusion_matrix(y_test, predicted)
 
-print(grid_search.best_params_)
+print("Confusion matrix:")
+print(cm)
+
+print("Precision:")
+print(precision_score(y_test, predicted))
+
+print("Recall:")
+print(recall_score(y_test, predicted))
+
+print("F1 score:")
+print(f1_score(y_test, predicted))
+
+# predict with these test data ["Male", 21, 0, 0, "current", 21.7, 6, 75.2]
+test = pd.DataFrame([["Male", 21, 0, 0, "current", 21.7, 6, 75.2]], columns=[
+                    'gender', 'age', 'hypertension', 'heart_disease', 'smoking_history', 'bmi', 'HbA1c_level', 'blood_glucose_level'])
+
+print("Prediction:")
+print(model_rfc.predict(test))
